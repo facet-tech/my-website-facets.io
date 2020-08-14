@@ -8,7 +8,7 @@ const getFacets = () => {
         facet && facet.forEach(f => {
             f.id && f.id.forEach(idx => {
                 var elem = document.querySelector(`#${idx}`);
-                elem.style.display = 'none';
+                if (elem) elem.style.display = 'none';
             })
         })
     });
