@@ -43,3 +43,4 @@ const targetNode = document.body
 const config = { subtree: true, childList: true };
 const observer = new MutationObserver(callback);
 observer.observe(targetNode, config);
+
