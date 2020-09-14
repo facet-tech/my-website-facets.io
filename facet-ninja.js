@@ -21,69 +21,25 @@ function getDomPath(el) {
         }
         el = el.parentNode;
     }
-    var aa = stack.slice(1); // removes the html element
+    var aa = stack.slice(1);
     return aa.join(' > ');
 }
 //aHR0cHM6Ly9teXdlYnNpdGUuZmFjZXQubmluamEv
 var all = document.getElementsByTagName("*");
-const getFacets = () => {
-    fetch(`https://api.facet.ninja/facet/${window.btoa(window.location.href)}`, {
-    }).then(function (response) {
-        return response.json();
-    }).then(function (data) {
-        const { facet } = data;
-        facet && facet.forEach(f => {
-            f.id && f.id.forEach(idx => {
-                //var elem = document.querySelector(`#${idx}`);
-                //if (elem) elem.style.display = 'none';
-                var node = $(idx)[0]
-                node.remove();
-            })
-        })
-    });
-}
-getFacets();
-
-/*
-const targetNode = document
-
-// Options for the observer (which mutations to observe)
-const config = { childList: true };
-
-
-// Callback function to execute when mutations are observed
-const callback = function(mutationsList, observer) {
-    // Use traditional 'for loops' for IE 11
+var nodesToRemove = new Set([
+    "body#fixed-container > div#welcome > h1#welcome",
+    "body#fixed-container > div > div"
+])
+//fetch(`https://api.facet.ninja/facet/${window.btoa(window.location.href)}`,
+const callback = async function(mutationsList, observer) {
     for(let mutation of mutationsList) {
-
-       //if (mutation.type === 'childList') {
-       //     console.log('A child node has been added or removed.');
-       // }
-
-        var mutatedNode = mutation.addedNodes[0]
-       // console.log(mutatedNode.nodeType)
-        if(mutatedNode.nodeType == "3") {
-            //mutatedNode.parentNode.removeChild(mutatedNode)
-            console.log(domElementPath(mutatedNode))
+        if(nodesToRemove.has(getDomPath(mutation.target))) {
+            mutation.target.remove();
         }
-        //else if (mutation.type === 'attributes') {
-        //    console.log('The ' + mutation.attributeName + ' attribute was modified.');
-        //}
     }
 };
 
-
-// Create an observer instance linked to the callback function
+const targetNode = document.body
+const config = { subtree: true, childList: true };
 const observer = new MutationObserver(callback);
-
-// Start observing the target node for configured mutations
 observer.observe(targetNode, config);
-
-// Later, you can stop observing
-//observer.disconnect();
-
-//var node = $("body#fixed-container > div#welcome")[0]
-//node.remove();
-
-
-*/
