@@ -1,4 +1,18 @@
+// data.set('/Users/mkotsollaris/projects/my-website-facets.io/about.html',
+//     new Set([
+//         "body>section:eq(2)>div>div:eq(1)>div:eq(0)>a",
+//         "body>div:eq(0)>div:eq(2)>div>div>h1",
+//         "body>div:eq(2)>div>div:eq(1)>div:eq(0)>div>img",
+//         "body>div:eq(0)>div:eq(2)>div>div",
+//         "body>nav#ftco-navbar",
+//         "body>div:eq(1)>section>div>div>div"
+//     ]));
+
 function getDomPath(el) {
+    // returns empty path for non valid element
+    if (!isElement(el)) {
+        return '';
+    }
     var stack = [];
     while (el.parentNode != null) {
         var sibCount = 0;
@@ -25,49 +39,54 @@ function getDomPath(el) {
     return res.replace(/\s+/g, '');
 }
 
+function isElement(element) {
+    return element instanceof Element || element instanceof HTMLDocument;
+}
+
 var data = new Map();
-data.set('/Users/mkotsollaris/projects/my-website-facets.io/about.html',
-    new Set([
-        "body>section:eq(2)>div>div:eq(1)>div:eq(0)>a",
-        "body>div:eq(0)>div:eq(2)>div>div>h1",
-        "body>div:eq(2)>div>div:eq(1)>div:eq(0)>div>img"
-    ]));
+
 
 var facetedNodes = new Set();
+let nodesToRemove = data.get(window.location.pathname) || new Map();
 
-const callback = async function (mutationsList, observer) {
+const callback = async function (mutationsList) {
     try {
-        if ((typeof disableHideFacetNinja === 'undefined' || disableHideFacetNinja === null || disableHideFacetNinja === false) && data.has(window.location.pathname)) {
-            let nodesToRemove = data.get(window.location.pathname) || new Map();
+        if (data.has(window.location.pathname)) {
             for (let mutation of mutationsList) {
-                let domPath = getDomPath(mutation.target);
-                if (nodesToRemove.has(domPath) && !facetedNodes.has(domPath)) {
-                    facetedNodes.add(domPath);
-                    mutation.target.style.display = "none"
-                    mutation.target.style.setProperty("display", "none", "important");
-                    continue;
-                }
                 // TODO avoid iterating over subtrees that are not included
-                const childDoms = mutation && mutation.target && mutation.target.children;
-                for(child of childDoms) {
-                    
-                    const childDomPath = getDomPath(child);
-                    if (nodesToRemove.has(childDomPath) && !facetedNodes.has(childDomPath)) {
-                        facetedNodes.add(childDomPath);
-                        child.style.display = "none"
-                        child.style.setProperty("display", "none", "important");
-                        continue;
-                    }
+                if (mutation && mutation.target && mutation.target.children) {
+                    domPathHide(mutation, mutation.target.children)
                 }
             }
         }
     } catch (e) {
         console.log('[ERROR]', e);
     }
-
 };
 
+/**
+ * Recursive function that iterates among DOM children
+ * 
+ * @param {*} mutation 
+ * @param {*} mutationChildren 
+ */
+const domPathHide = (mutation, mutationChildren) => {
+    if (!mutationChildren) {
+        return;
+    }
+    for (child of mutationChildren) {
+        const childDomPath = getDomPath(child);
+        if (nodesToRemove.has(childDomPath) && !facetedNodes.has(childDomPath)) {
+            facetedNodes.add(childDomPath);
+            child.style.display = "none"
+            child.style.setProperty("display", "none", "important");
+        }
+        domPathHide(mutation, child.childNodes);
+    }
+}
+
+
 const targetNode = document
-const config = { subtree: true, childList: true, attributes: true};
+const config = { subtree: true, childList: true, attributes: true };
 const observer = new MutationObserver(callback);
 observer.observe(targetNode, config);
